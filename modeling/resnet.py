@@ -223,6 +223,16 @@ def ResNet101(output_stride, BatchNorm,pretrained=True, imagenet_pretrained_path
     )
     return model
 
+def build_backbone(
+    output_stride, BatchNorm, pretrained=True, imagenet_pretrained_path=""
+):
+    return ResNet101(
+        output_stride,
+        BatchNorm,
+        pretrained=pretrained,
+        imagenet_pretrained_path=imagenet_pretrained_path,
+    )
+
 if __name__=="__main__":
     from torchview import draw_graph
     model = ResNet(

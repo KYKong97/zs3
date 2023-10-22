@@ -64,7 +64,7 @@ class ASPP(nn.Module):
 
         self.aspp2 = _ASPPModule(
             inplanes,
-            256,3,padding=dilations[1],dilation=[1],BatchNorm=BatchNorm
+            256,3,padding=dilations[1],dilation=dilations[1],BatchNorm=BatchNorm
         )
         self.aspp3 = _ASPPModule(
             inplanes, 256,3,padding=dilations[2], dilation=dilations[2],
