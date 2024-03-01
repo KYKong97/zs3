@@ -8,19 +8,14 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from mmseg.models.builder import BACKBONES
+from detectron2.modeling import BACKBONE_REGISTRY
 from torch.nn.init import normal_
-import sys
-a = sys.path
-print(a)
-from scripts.modelling.ops.modules.ms_deform_attn import MSDeformAttn
-
-from ...ops.modules import MSDeformAttn
+from ..ops.modules import MSDeformAttn
 from .adapter_modules import InteractionBlock, InteractionBlockWithCls, SpatialPriorModule, deform_inputs
 from .vit import TIMMVisionTransformer
 
 
-@BACKBONES.register_module()
+@BACKBONE_REGISTRY.register()
 class ViTAdapter(TIMMVisionTransformer):
     def __init__(
         self,
