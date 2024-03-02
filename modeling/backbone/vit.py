@@ -37,12 +37,30 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as cp
-from mmcv.runner import BaseModule, load_checkpoint
-from mmseg.ops import resize
-from mmseg.utils import get_root_logger
 from torch import Tensor
 
 from .drop_path import DropPath
+
+def resize(input,
+           size=None,
+           scale_factor=None,
+           mode='nearest',
+           align_corners=None,
+           warning=True):
+    if warning:
+        if size is not None and align_corners:
+            input_h, input_w = tuple(int(x) for x in input.shape[2:])
+            output_h, output_w = tuple(int(x) for x in size)
+            if output_h > input_h or output_w > input_w:
+                if ((output_h > 1 and output_w > 1 and input_h > 1
+                     and input_w > 1) and (output_h - 1) % (input_h - 1)
+                        and (output_w - 1) % (input_w - 1)):
+                    warnings.warn(
+                        f'When align_corners={align_corners}, '
+                        'the output would more aligned if '
+                        f'input size {(input_h, input_w)} is `x+1` and '
+                        f'out size {(output_h, output_w)} is `nx+1`')
+    return F.interpolate(input, size, scale_factor, mode, align_corners)
 
 
 def to_2tuple(x):
@@ -383,7 +401,7 @@ class Block(nn.Module):
         return x
 
 
-class TIMMVisionTransformer(BaseModule):
+class TIMMVisionTransformer(nn.Module):
     """Vision Transformer.
 
     A PyTorch impl of : `An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale`
@@ -498,12 +516,11 @@ class TIMMVisionTransformer(BaseModule):
             self.norm_pre = norm_pre
         else:
             self.norm_pre = nn.Identity()
-        self.init_weights(pretrained)
 
-    def init_weights(self, pretrained=None):
-        if isinstance(pretrained, str):
-            logger = get_root_logger()
-            load_checkpoint(self, pretrained, map_location="cpu", strict=False, logger=logger)
+        if pretrained is not None:
+            self.init_weights(pretrained)
+
+
 
     def forward_features(self, x):
         x, H, W = self.patch_embed(x)

@@ -7,6 +7,28 @@ from torch.autograd import Function
 from torch.cuda.amp import custom_fwd
 from torch.nn.init import constant_, xavier_uniform_
 
+def ms_deform_attn_core_pytorch(value, value_spatial_shapes, sampling_locations, attention_weights):
+    # for debug and test only,
+    # need to use cuda version instead
+    N_, S_, M_, D_ = value.shape
+    _, Lq_, M_, L_, P_, _ = sampling_locations.shape
+    value_list = value.split([H_ * W_ for H_, W_ in value_spatial_shapes], dim=1)
+    sampling_grids = 2 * sampling_locations - 1
+    sampling_value_list = []
+    for lid_, (H_, W_) in enumerate(value_spatial_shapes):
+        # N_, H_*W_, M_, D_ -> N_, H_*W_, M_*D_ -> N_, M_*D_, H_*W_ -> N_*M_, D_, H_, W_
+        value_l_ = value_list[lid_].flatten(2).transpose(1, 2).reshape(N_*M_, D_, H_, W_)
+        # N_, Lq_, M_, P_, 2 -> N_, M_, Lq_, P_, 2 -> N_*M_, Lq_, P_, 2
+        sampling_grid_l_ = sampling_grids[:, :, :, lid_].transpose(1, 2).flatten(0, 1)
+        # N_*M_, D_, Lq_, P_
+        sampling_value_l_ = F.grid_sample(value_l_, sampling_grid_l_,
+                                          mode='bilinear', padding_mode='zeros', align_corners=False)
+        sampling_value_list.append(sampling_value_l_)
+    # (N_, Lq_, M_, L_, P_) -> (N_, M_, Lq_, L_, P_) -> (N_, M_, 1, Lq_, L_*P_)
+    attention_weights = attention_weights.transpose(1, 2).reshape(N_*M_, 1, Lq_, L_*P_)
+    output = (torch.stack(sampling_value_list, dim=-2).flatten(-2) * attention_weights).sum(-1).view(N_, M_*D_, Lq_)
+    return output.transpose(1, 2).contiguous()
+
 class MSDeformAttnFunction(Function):
     @staticmethod
     @custom_fwd(cast_inputs=torch.float32)
@@ -45,14 +67,14 @@ class MSDeformAttn(nn.Module):
         self.n_heads = n_heads
         self.n_points = n_points
         self.ratio = ratio
-        self.sampling_offset = nn.Linear(d_model, n_heads*n_levels*n_points*2)
+        self.sampling_offsets = nn.Linear(d_model, n_heads*n_levels*n_points*2)
         self.attention_weights = nn.Linear(d_model, n_heads*n_levels*n_points)
         self.value_proj = nn.Linear(d_model, int(d_model*ratio))
         self.output_proj = nn.Linear(int(d_model*ratio),d_model)
         self._reset_parameters()
 
     def _reset_parameters(self):
-        constant_(self.sampling_offset.weight.data,0.0)
+        constant_(self.sampling_offsets.weight.data,0.0)
         thetas = torch.arange(self.n_heads, dtype=torch.float32) * (2.0 * math.pi / self.n_heads)
         grid_init = torch.stack([thetas.cos(), thetas.sin()], -1)
         grid_init = (
@@ -64,7 +86,7 @@ class MSDeformAttn(nn.Module):
             grid_init[:, :, i, :] *= i + 1
         
         with torch.no_grad():
-            self.sampling_offset = nn.Parameter(grid_init.view(-1))
+            self.sampling_offsets.bias = nn.Parameter(grid_init.view(-1))
         constant_(self.attention_weights.weight.data,0.0)
         constant_(self.attention_weights.bias.data,0.0)
         xavier_uniform_(self.value_proj.weight.data)

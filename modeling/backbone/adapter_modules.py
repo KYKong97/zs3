@@ -8,8 +8,7 @@ from functools import partial
 import torch
 import torch.nn as nn
 import torch.utils.checkpoint as cp
-
-from ...ops.modules import MSDeformAttn
+from ..ops.modules import MSDeformAttn
 from .drop_path import DropPath
 
 
@@ -376,16 +375,18 @@ class SpatialPriorModule(nn.Module):
         super().__init__()
         self.with_cp = with_cp
 
+
+
         self.stem = nn.Sequential(
             *[
                 nn.Conv2d(3, inplanes, kernel_size=3, stride=2, padding=1, bias=False),
-                nn.SyncBatchNorm(inplanes),
+                nn.SyncBatchNorm(inplanes) if torch.cuda.is_available() else nn.BatchNorm2d(inplanes),
                 nn.ReLU(inplace=True),
                 nn.Conv2d(inplanes, inplanes, kernel_size=3, stride=1, padding=1, bias=False),
-                nn.SyncBatchNorm(inplanes),
+                nn.SyncBatchNorm(inplanes) if torch.cuda.is_available() else nn.BatchNorm2d(inplanes),
                 nn.ReLU(inplace=True),
                 nn.Conv2d(inplanes, inplanes, kernel_size=3, stride=1, padding=1, bias=False),
-                nn.SyncBatchNorm(inplanes),
+                nn.SyncBatchNorm(inplanes) if torch.cuda.is_available() else nn.BatchNorm2d(inplanes),
                 nn.ReLU(inplace=True),
                 nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
             ]
@@ -393,21 +394,21 @@ class SpatialPriorModule(nn.Module):
         self.conv2 = nn.Sequential(
             *[
                 nn.Conv2d(inplanes, 2 * inplanes, kernel_size=3, stride=2, padding=1, bias=False),
-                nn.SyncBatchNorm(2 * inplanes),
+                nn.SyncBatchNorm(2 * inplanes) if torch.cuda.is_available() else nn.BatchNorm2d(2*inplanes),
                 nn.ReLU(inplace=True),
             ]
         )
         self.conv3 = nn.Sequential(
             *[
                 nn.Conv2d(2 * inplanes, 4 * inplanes, kernel_size=3, stride=2, padding=1, bias=False),
-                nn.SyncBatchNorm(4 * inplanes),
+                nn.SyncBatchNorm(4 * inplanes) if torch.cuda.is_available() else nn.BatchNorm2d(4*inplanes),
                 nn.ReLU(inplace=True),
             ]
         )
         self.conv4 = nn.Sequential(
             *[
                 nn.Conv2d(4 * inplanes, 4 * inplanes, kernel_size=3, stride=2, padding=1, bias=False),
-                nn.SyncBatchNorm(4 * inplanes),
+                nn.SyncBatchNorm(4 * inplanes) if torch.cuda.is_available() else nn.BatchNorm2d(4*inplanes),
                 nn.ReLU(inplace=True),
             ]
         )

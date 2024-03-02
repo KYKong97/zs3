@@ -1,0 +1,5 @@
+torch==1.10.1
+torchvision==0.11.2
+detectron2
+
+--extra-index-url https://dl.fbaipublicfiles.com/detectron2/wheels/cu113/torch1.10/index.html
