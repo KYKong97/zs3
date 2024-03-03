@@ -1,6 +1,9 @@
-FROM kuokyong1997/zeroshot:latest AS build
+FROM yihui8776/deformable-detr:v2
 
-FROM nvidia/cuda:11.3.1-runtime-ubuntu20.04
+WORKDIR /app
+RUN python3 -m pip install typing-extensions jupyter detectron2 -f \
+  https://dl.fbaipublicfiles.com/detectron2/wheels/cu113/torch1.10/index.html --upgrade
 
-COPY --from=build /opt/conda /opt/conda
-ENV PATH="${PATH}:/opt/conda/bin"
+
+
+

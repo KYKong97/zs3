@@ -14,6 +14,7 @@ from detectron2.config import configurable
 from detectron2.layers import Conv2d, DeformConv, ShapeSpec, get_norm
 from detectron2.modeling import SEM_SEG_HEADS_REGISTRY
 
+
 from ..transformer_decoder.position_encoding import PositionEmbeddingSine
 from ..transformer_decoder.transformer import TransformerEncoder, TransformerEncoderLayer, _get_clones, _get_activation_fn
 
@@ -22,6 +23,7 @@ def build_pixel_decoder(cfg, input_shape):
     """
     Build a pixel decoder from `cfg.MODEL.MASK_FORMER.PIXEL_DECODER_NAME`.
     """
+
     name = cfg.MODEL.SEM_SEG_HEAD.PIXEL_DECODER_NAME
     model = SEM_SEG_HEADS_REGISTRY.get(name)(cfg, input_shape)
     forward_features = getattr(model, "forward_features", None)
