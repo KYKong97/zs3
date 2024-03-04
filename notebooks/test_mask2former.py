@@ -1,0 +1,1 @@
+from modeling.decode_heads.mask2former_head import MaskFormerHead

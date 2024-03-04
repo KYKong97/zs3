@@ -1,0 +1,1 @@
+from modeling.transformer_decoder.mask2former_transformer_decoder import MultiScaleMaskedTransformerDecoder
