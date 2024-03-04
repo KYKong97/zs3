@@ -1,6 +1,6 @@
 {
 	"name": "Docker in Docker",
-	"dockerFile": "Dockerfile",
+	"image": "mcr.microsoft.com/devcontainers/javascript-node:18",
 	"runArgs": ["--init", "--privileged"],
 	"mounts": ["source=dind-var-lib-docker,target=/var/lib/docker,type=volume"],
 	"overrideCommand": false,
