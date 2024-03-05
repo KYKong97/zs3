@@ -162,7 +162,7 @@ class MSDeformAttnTransformerEncoder(nn.Module):
         return output
 
 
-# @SEM_SEG_HEADS_REGISTRY.register()
+@SEM_SEG_HEADS_REGISTRY.register()
 class MSDeformAttnPixelDecoder(nn.Module):
     @configurable
     def __init__(
