@@ -1,4 +1,4 @@
-FROM yihui8776/deformable-detr:v2
+FROM nvcr.io/nvidia/pytorch:19.12-py3
 
 WORKDIR /app
 RUN python3 -m pip install typing-extensions jupyter detectron2 -f \

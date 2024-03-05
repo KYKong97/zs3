@@ -1,6 +1,6 @@
 {
 	"name": "Docker in Docker",
-	"dockerFile": "Dockerfile",
+	"image": "nvcr.io/nvidia/pytorch:19.12-py3",
 	"runArgs": ["--init", "--privileged"],
 	"mounts": ["source=dind-var-lib-docker,target=/var/lib/docker,type=volume"],
 	"overrideCommand": false,
